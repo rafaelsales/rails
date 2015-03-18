@@ -599,17 +599,31 @@ module ActiveRecord
 
     def exec_migration(conn, direction)
       @connection = conn
-      if respond_to?(:change)
-        if direction == :down
-          revert { change }
+      print_dots_while do
+        if respond_to?(:change)
+          if direction == :down
+            revert { change }
+          else
+            change
+          end
         else
-          change
+          send(direction)
         end
-      else
-        send(direction)
       end
     ensure
       @connection = nil
+    end
+
+    def print_dots_while(&block)
+      dots_printer = Thread.new do
+        loop do
+          sleep 60 * 3 # ... or `config.active_record.migration_ping_interval`
+          putc "."
+        end
+      end
+      block.call
+    ensure
+      dots_printer.exit
     end
 
     def write(text="")
