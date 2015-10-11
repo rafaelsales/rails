@@ -43,7 +43,7 @@ module ActiveRecord
       def not(opts, *rest)
         where_clause = @scope.send(:where_clause_factory).build(opts, rest)
 
-        @scope.references!(PredicateBuilder.references(opts)) if Hash === opts
+        @scope.references!(@scope.tables_referenced_in(opts)) if Hash === opts
         @scope.where_clause += where_clause.invert
         @scope
       end
@@ -558,7 +558,7 @@ module ActiveRecord
 
     def where!(opts, *rest) # :nodoc:
       opts = sanitize_forbidden_attributes(opts)
-      references!(PredicateBuilder.references(opts)) if Hash === opts
+      references!(tables_referenced_in(opts)) if Hash === opts
       self.where_clause += where_clause_factory.build(opts, rest)
       self
     end
@@ -616,7 +616,7 @@ module ActiveRecord
 
     def having!(opts, *rest) # :nodoc:
       opts = sanitize_forbidden_attributes(opts)
-      references!(PredicateBuilder.references(opts)) if Hash === opts
+      references!(tables_referenced_in(opts)) if Hash === opts
 
       self.having_clause += having_clause_factory.build(opts, rest)
       self
@@ -865,6 +865,20 @@ module ActiveRecord
     # Returns the Arel object associated with the relation.
     def arel # :nodoc:
       @arel ||= build_arel
+    end
+
+    # Returns list of tables referenced in +attributes+. If +attributes+ is an array, it
+    # ignores the values. If +attributes+ is a hash, it considers it has following form:
+    # { table_a: { some_attr: 'foo' }, table_b: { another_attr: 'bar' }
+    def tables_referenced_in(attributes)
+      attributes.map do |key, value|
+        if value.is_a?(Hash)
+          key
+        else
+          key = key.to_s
+          key.split('.'.freeze).first if key.include?('.'.freeze)
+        end
+      end.compact
     end
 
     private

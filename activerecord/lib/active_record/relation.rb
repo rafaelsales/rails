@@ -613,7 +613,7 @@ module ActiveRecord
     def eager_loading?
       @should_eager_load ||=
         eager_load_values.any? ||
-        includes_values.any? && (joined_includes_values.any? || references_eager_loaded_tables?)
+        includes_values.any? && (joined_includes_values.any? || references_non_joined_tables?)
     end
 
     # Joins that are also marked for preloading. In which case we should just eager load them.
@@ -692,7 +692,8 @@ module ActiveRecord
       ActiveRecord::Associations::Preloader.new
     end
 
-    def references_eager_loaded_tables?
+    # Returns true if there are referenced tables that are not present in join clauses
+    def references_non_joined_tables?
       joined_tables = arel.join_sources.map do |join|
         if join.is_a?(Arel::Nodes::StringJoin)
           tables_in_string(join.left)

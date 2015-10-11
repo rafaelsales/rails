@@ -46,17 +46,6 @@ module ActiveRecord
       build(table.arel_attribute(column), value)
     end
 
-    def self.references(attributes)
-      attributes.map do |key, value|
-        if value.is_a?(Hash)
-          key
-        else
-          key = key.to_s
-          key.split('.'.freeze).first if key.include?('.'.freeze)
-        end
-      end.compact
-    end
-
     # Define how a class is converted to Arel nodes when passed to +where+.
     # The handler can be any object that responds to +call+, and will be used
     # for any value that +===+ the class given. For example:
